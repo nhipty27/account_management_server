@@ -7,7 +7,6 @@ using AccountManagement.Infrastructure.Database;
 using Dapper;
 using FluentValidation;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using System.Data;
 
 namespace AccountManagement.Application.Auth.Commands

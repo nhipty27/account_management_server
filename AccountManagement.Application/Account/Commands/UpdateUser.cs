@@ -110,7 +110,7 @@ namespace AccountManagement.Application.Account.Commands
                     parameters.Add("@name", request.Data.name ?? "", DbType.String);
                     parameters.Add("@gender", request.Data.gender, DbType.Boolean);
                     parameters.Add("@address", request.Data.address ?? null, DbType.String);
-                    parameters.Add("@dayOfBirth", request.Data.dayOfBirth, DbType.DateTime);
+                    parameters.Add("@dayOfBirth", request.Data.dayOfBirth ?? null, DbType.DateTime);
                     parameters.Add("@id", request.Data.id, DbType.Int32);
 
                     var res = _query.Query<BaseResStore>(updateUser, parameters).FirstOrDefault();

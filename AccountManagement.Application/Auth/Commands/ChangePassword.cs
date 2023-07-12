@@ -21,12 +21,6 @@ namespace AccountManagement.Application.Auth.Commands
             IF (@isLogout = 1)
             BEGIN
                 DELETE FROM USER_TOKEN WHERE userId = @id
-
-                IF @@ROWCOUNT <= 0
-                    BEGIN
-                        SELECT @ResultStatus = -1, @Message = N'Đổi mật khẩu thất bại';
-                        GOTO lblResult;
-                    END;
             END
 
             UPDATE USERS SET password = @new_password
@@ -79,24 +73,15 @@ namespace AccountManagement.Application.Auth.Commands
                 try
                 {
                     var oldPw = _query.Query<string>(getOldPassword, new {id = request.Data.id}).FirstOrDefault();
-                    if (oldPw != null)
-                    {
-                        result.Message = "Tài khoản không tồn tại";
-                        result._code = -130;
-                    }
                     if(HashPassword.VerifyPassword(request.Data.oldPassword, oldPw))
                     {
                         var res = _query.Query<BaseResStore>(changPw, parameters).FirstOrDefault();
-                        if (res.ResultStatus == -1)
-                        {
-                            result._code = -302;
-                        }
                         result.Message = res.Message;
                         if(request.Data.isLogout == true)
                         {
                             result.Data = 0;
                         }
-                        result.Data = 1;
+                        else result.Data = 1;
                         return result;
                     }
                     else

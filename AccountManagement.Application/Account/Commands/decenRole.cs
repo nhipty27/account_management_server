@@ -1,16 +1,10 @@
 ﻿using AccountManagement.Application.Account.Dtos;
 using AccountManagement.Application.Common.Models;
-using AccountManagement.Application.Redis.Common;
 using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;
 using Dapper;
 using FluentValidation;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AccountManagement.Application.Account.Commands
 {

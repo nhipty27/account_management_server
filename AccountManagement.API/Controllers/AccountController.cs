@@ -70,14 +70,15 @@ namespace AccountManagement.API.Controllers
             return Ok(data);
         }
 
-        [HttpDelete]
+        [HttpPost]
         [Route("delete-account")]
         [Authorize(Roles = "ADMIN")]
-        public async Task<ActionResult> deleteAccountRole([FromBody] int id)
+        public async Task<ActionResult> deleteAccountRole([FromBody] deleteRequest Data)
         {
+            
             var data = await _mediator.Send(new DeleteAccount.Command
             {
-                id = id
+                Data = Data
             });
             return Ok(data);
         }

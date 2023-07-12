@@ -20,4 +20,9 @@
         public int createBy { get; set; }
     }
 
+    public class deleteRequest
+    {
+        public int id { get; set; }
+    }
+
 }

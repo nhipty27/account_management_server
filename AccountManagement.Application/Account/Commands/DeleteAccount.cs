@@ -1,13 +1,8 @@
-﻿using AccountManagement.Application.Redis.Common;
-using AccountManagement.Infrastructure.Core.Authentication;
+﻿using AccountManagement.Application.Account.Dtos;
+using AccountManagement.Application.Redis.Common;
 using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;
 using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AccountManagement.Application.Account.Commands
 {
@@ -29,7 +24,7 @@ namespace AccountManagement.Application.Account.Commands
         /// </summary>
         public class Command : IRequestWrapper<string>
         {
-            public int id { get; set; }
+            public deleteRequest Data { get; set; }
         }
 
         /// <summary>
@@ -58,8 +53,8 @@ namespace AccountManagement.Application.Account.Commands
 
                 try
                 {
-                    _query.Query<string>(deleteAccount, new { id = request.id });
-                    _redisProvider.DeleteByKey($"token {request.id}");
+                    _query.Query<string>(deleteAccount, new { id = request.Data.id });
+                    _redisProvider.DeleteByKey($"token {request.Data.id}");
                 }
                 catch (Exception ex)
                 {

@@ -1,5 +1,4 @@
-﻿using AccountManagement.Application.Account.Dtos;
-using AccountManagement.Application.Redis.Common;
+﻿using AccountManagement.Application.Redis.Common;
 using AccountManagement.Infrastructure.Core.Authentication;
 using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;

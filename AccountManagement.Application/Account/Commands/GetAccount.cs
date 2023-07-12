@@ -4,7 +4,6 @@ using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;
 using Dapper;
 using FluentValidation;
-using System.Collections.Generic;
 using System.Data;
 
 namespace AccountManagement.Application.Account.Commands
@@ -132,7 +131,7 @@ namespace AccountManagement.Application.Account.Commands
                     parameters.Add("@searchType", request.Data.searchType ?? "", DbType.String);
                     parameters.Add("@searchValue", request.Data.searchValue ?? "", DbType.String);
                     parameters.Add("@sortType", request.Data.sortType ?? "createAt", DbType.String);
-                    parameters.Add("@sortValue", request.Data.sortValue ?? "ASC", DbType.String);
+                    parameters.Add("@sortValue", request.Data.sortValue ?? "DESC", DbType.String);
                     parameters.Add("@page", request.Data.page , DbType.Int32);
                     parameters.Add("@pageSize", request.Data.pageSize , DbType.Int32);
                     if(role == null)
