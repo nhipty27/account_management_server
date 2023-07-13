@@ -1,11 +1,13 @@
 ﻿using AccountManagement.Application.Account.Dtos;
 using AccountManagement.Application.Common;
 using AccountManagement.Application.Common.Models;
+using AccountManagement.Application.Redis.Common;
 using AccountManagement.Infrastructure.Core.Authentication;
 using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;
 using Dapper;
 using FluentValidation;
+using Newtonsoft.Json;
 using System.Data;
 
 namespace AccountManagement.Application.Account.Commands
@@ -75,8 +77,9 @@ namespace AccountManagement.Application.Account.Commands
                             SELECT @ResultStatus = -1, @Message = N'Thêm tài khoản thất bại';
                             GOTO lblResult;
                         END
+                    SET @ResultStatus = @userId;
                 END
-            SELECT @ResultStatus = 1, @Message = N'Thêm tài khoản thành công';
+            SELECT @Message = N'Thêm tài khoản thành công';
 
             lblResult:
                 IF @ResultStatus = -1
@@ -125,22 +128,23 @@ namespace AccountManagement.Application.Account.Commands
         public class Handler : IRequestHandlerWrapper<Command, string>
         {
             private readonly IQuery _query;
-
-            public Handler(IQuery query)
+            private readonly IRedisProvider _redisProvider;
+            public Handler(IQuery query, IRedisProvider redisProvider)
             {
                 _query = query;
+                _redisProvider = redisProvider;
             }
             
             public async Task<ResultObject<string>> Handle(Command request, CancellationToken cancellationToken)
             {
                 DynamicParameters parameters = new DynamicParameters();
                 var result = new ResultObject<string>();
-                string jwt = JwtEventsHandler.GenerateJwtToken(request.Data.email, "USER");
+                string jwt = Jwt.GenerateJwtToken(request.Data.email, "USER");
 
                 //check role
                 if(request.Data.role != null && request.Data.createBy > 0)
                 {
-                    string roleToken = JwtEventsHandler.getClaim(request.Token, "role");
+                    string roleToken = Jwt.getClaim(request.Token, "role");
                     string roleId = _query.Query<string>(getRole, new { id = request.Data.createBy }).FirstOrDefault();
                     if (roleToken == roleId && roleId == "ADMIN")
                     {
@@ -166,6 +170,7 @@ namespace AccountManagement.Application.Account.Commands
                     if(res.ResultStatus == 1  && request.Data.createBy <= 0)
                     {
                         result.Data = jwt;
+                        _redisProvider.PushTopIfNotExist($"token{res.ResultStatus}", JsonConvert.SerializeObject(jwt));
                     }
                     if (res.ResultStatus == -1)
                     {

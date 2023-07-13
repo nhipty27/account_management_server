@@ -1,4 +1,7 @@
 ﻿using AccountManagement.Infrastructure.Database;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 using System.Text;
 
 namespace AccountManagement.Application.Redis.Common
@@ -41,7 +44,7 @@ namespace AccountManagement.Application.Redis.Common
             try
             {
                 if (string.IsNullOrEmpty(value)) return rs;
-                rs = RedisDb.ListLeftPush(key, value.ToUpper());
+                rs = RedisDb.ListLeftPush(key, value);
             }
             catch
             {
@@ -90,6 +93,38 @@ namespace AccountManagement.Application.Redis.Common
             catch
             {
                 return null;
+            }
+        }
+
+        public long RemoveValueByKey(string key, string value)
+        {
+            var rs = (long)-1.0;
+            var input = new { key, value };
+            string listMsg = string.Empty;
+            try
+            {
+                RedisDb.KeyPersist(key);
+                var result = (RedisValue)value;
+                rs = RedisDb.ListRemove(key, result);
+                rs = (long)1.0;
+            }
+            catch
+            {
+                rs=(long)-1.0;
+            }
+            return rs;
+        }
+
+        public bool ExistValueByKey(string key, string value)
+        {
+            var input = new { key, value };
+            try
+            {
+                return RedisDb.SetContains(key, value);
+            }
+            catch 
+            {
+                return false;
             }
         }
     }

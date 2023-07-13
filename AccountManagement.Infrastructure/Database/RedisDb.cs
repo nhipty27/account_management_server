@@ -70,5 +70,57 @@ namespace AccountManagement.Infrastructure.Database
             return _db.ListLeftPush(key, value);
         }
 
+        /// <summary>
+        /// KeyPersist
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static bool KeyPersist(string key)
+        {
+            var redis = ConnectionMultiplexer.Connect("localhost:6379");
+            IDatabase _db = redis.GetDatabase();
+            return _db.KeyPersist(key);
+        }
+
+        /// <summary>
+        /// ListRemove
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="time"></param>
+        public static long ListRemove(string key, string value)
+        {
+            var redis = ConnectionMultiplexer.Connect("localhost:6379");
+            IDatabase _db = redis.GetDatabase();
+            return _db.ListRemove(key, value);
+        }
+
+        /// <summary>
+        /// SetContains
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool SetContains(string key, string value)
+        {
+            var redis = ConnectionMultiplexer.Connect("localhost:6379");
+            IDatabase _db = redis.GetDatabase();
+            if (_db.KeyExists(key))
+            {
+                try
+                {
+                    var list = _db.ListRange(key).ToList();
+                    int index = list.IndexOf(value);
+                    return index >= 0 ? true : false;
+                }
+                catch (Exception ex)
+                {
+                    Console.Write(ex.Message);
+                    return false;
+                }
+            }
+            return false;
+        }
+
     }
 }

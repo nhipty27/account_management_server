@@ -95,7 +95,7 @@ namespace AccountManagement.Application.Account.Commands
 
                     if (request.Data.createBy >  0)
                     {
-                        string roleToken = JwtEventsHandler.getClaim(request.Token, "role");
+                        string roleToken = Jwt.getClaim(request.Token, "role");
                         string roleId = _query.Query<string>(getRole, new { id = request.Data.createBy }).FirstOrDefault();
                         if(roleToken == roleId && roleId == "ADMIN")
                         {

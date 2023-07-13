@@ -1,8 +1,8 @@
 ﻿using AccountManagement.Application.Redis.Common;
-using AccountManagement.Infrastructure.Core.Authentication;
 using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;
 using FluentValidation;
+using Newtonsoft.Json;
 
 namespace AccountManagement.Application.Auth.Commands
 {
@@ -42,9 +42,9 @@ namespace AccountManagement.Application.Auth.Commands
 
                 try {
                     string sqlRole = @"DELETE FROM USER_TOKEN WHERE TOKEN = @token";
+                    int userId = _query.Query<int>("SELECT userId FROM USER_TOKEN WHERE TOKEN = @token", new { token = request.token }).FirstOrDefault();
                     _query.Query<string>(sqlRole, new { token = request.token });
-                    var email = JwtEventsHandler.getClaim(request.token);
-                    _redisProvider.DeleteByKey($"token {email}");
+                    _redisProvider.RemoveValueByKey($"token{userId}", JsonConvert.SerializeObject(request.token));
                 }
                 catch (Exception ex)
                 {

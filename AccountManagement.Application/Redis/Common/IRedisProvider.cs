@@ -7,6 +7,8 @@
         public bool SetValueByKey(string key, string value, int time = 0);
         public string DeleteByKey(string key);
         public string GetByKey(string key);
+        public long RemoveValueByKey(string key, string value);
 
+        public bool ExistValueByKey(string key, string value);
     }
 }

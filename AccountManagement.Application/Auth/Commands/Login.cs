@@ -7,6 +7,7 @@ using AccountManagement.Infrastructure.Database;
 using Dapper;
 using FluentValidation;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System.Data;
 
 namespace AccountManagement.Application.Auth.Commands
@@ -14,7 +15,7 @@ namespace AccountManagement.Application.Auth.Commands
     public class Login
     {
         /// <summary>
-		/// Kiểm tra thông tin đăng nhập.
+		/// Thêm token vào db.
 		/// </summary>
         const string addToken = @"
             DECLARE
@@ -44,7 +45,7 @@ namespace AccountManagement.Application.Auth.Commands
         ";
 
         ///<summary>
-        ///script kiểm tra role.
+        ///script lấy thông tin role.
         ///</summary>
         const string getRole = @"
             SELECT R.NAME 
@@ -105,17 +106,17 @@ namespace AccountManagement.Application.Auth.Commands
                         DynamicParameters parameters = new DynamicParameters();
                         parameters.Add("@email", request.email ?? "", DbType.String);
                         parameters.Add("@name", request.password ?? "", DbType.String);
-                        parameters.Add("@tokenDay", 10, DbType.Int32);
+                        parameters.Add("@tokenDay", 1, DbType.Int32);
 
                         var role = _query.Query<string>(getRole, parameters).FirstOrDefault();
-                        string jwt = JwtEventsHandler.GenerateJwtToken(request.email, role);
+                        string jwt = Jwt.GenerateJwtToken(request.email, role);
                         parameters.Add("@token", jwt, DbType.String);
 
                         var res = _query.Query<BaseResStore>(addToken, parameters).FirstOrDefault();
                         result.Message = res.Message;
                         if(res.ResultStatus != -1)
                         {
-                            _redisProvider.SetValueByKey($"token {res.ResultStatus}", jwt,1 );
+                            _redisProvider.PushTopIfNotExist($"token{res.ResultStatus}", JsonConvert.SerializeObject(jwt));
                             result.Data = jwt;
                         }
                         else

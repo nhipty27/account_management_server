@@ -86,8 +86,12 @@ namespace AccountManagement.API.Controllers
         [Route("change-password")]
         public async Task<ActionResult> ChangePassword([FromBody] changePasswordRequest Data )
         {
+            HttpContext context = _accessor.HttpContext;
+            context.Request.Headers.TryGetValue("Authorization", out var value);
+            var token = value.ToString().Replace("bearer ", "");
             var data = await _mediator.Send(new ChangePassword.Command{
-                Data = Data
+                Data = Data,
+                curToken = token
             });
             return Ok(data);
         }

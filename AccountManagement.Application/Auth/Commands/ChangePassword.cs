@@ -1,12 +1,13 @@
-﻿using AccountManagement.Application.Account.Dtos;
-using AccountManagement.Application.Auth.Dtos;
+﻿using AccountManagement.Application.Auth.Dtos;
 using AccountManagement.Application.Common;
 using AccountManagement.Application.Common.Models;
+using AccountManagement.Application.Redis.Common;
+using AccountManagement.Infrastructure.Core.Authentication;
 using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;
 using Dapper;
 using FluentValidation;
-using System;
+using Newtonsoft.Json;
 using System.Data;
 
 namespace AccountManagement.Application.Auth.Commands
@@ -20,7 +21,7 @@ namespace AccountManagement.Application.Auth.Commands
             --đăng xuất tất cả tài khoản
             IF (@isLogout = 1)
             BEGIN
-                DELETE FROM USER_TOKEN WHERE userId = @id
+                DELETE FROM USER_TOKEN WHERE userId = @id AND TOKEN <> @curToken
             END
 
             UPDATE USERS SET password = @new_password
@@ -40,6 +41,7 @@ namespace AccountManagement.Application.Auth.Commands
         public class Command : IRequestWrapper<int>
         {
             public changePasswordRequest Data { get; set; }
+            public string curToken { get; set; }
         }
 
         /// <summary>
@@ -58,10 +60,12 @@ namespace AccountManagement.Application.Auth.Commands
         public class Handler : IRequestHandlerWrapper<Command, int>
         {
             private readonly IQuery _query;
+            private readonly IRedisProvider _redisProvider;
 
-            public Handler(IQuery query)
+            public Handler(IQuery query, IRedisProvider redisProvider)
             {
                 _query = query;
+                _redisProvider = redisProvider;
             }
             public async Task<ResultObject<int>> Handle(Command request, CancellationToken cancellationToken)
             {
@@ -70,6 +74,7 @@ namespace AccountManagement.Application.Auth.Commands
                 parameters.Add("@id", request.Data.id, DbType.Int32);
                 parameters.Add("@new_password", HashPassword.CreatePasswordHash(request.Data.newPassword) ?? "", DbType.String);
                 parameters.Add("@isLogout", request.Data.isLogout, DbType.Boolean);
+                parameters.Add("@curToken", request.curToken, DbType.String);
                 try
                 {
                     var oldPw = _query.Query<string>(getOldPassword, new {id = request.Data.id}).FirstOrDefault();
@@ -80,6 +85,8 @@ namespace AccountManagement.Application.Auth.Commands
                         if(request.Data.isLogout == true)
                         {
                             result.Data = 0;
+                            _redisProvider.DeleteByKey($"token{request.Data.id}");
+                            _redisProvider.PushTopIfNotExist($"token{request.Data.id}", JsonConvert.SerializeObject(request.curToken));
                         }
                         else result.Data = 1;
                         return result;

@@ -1,8 +1,10 @@
 ﻿using AccountManagement.Application.Common.Models;
+using AccountManagement.Application.Redis.Common;
 using AccountManagement.Infrastructure.Core.Authentication;
 using AccountManagement.Infrastructure.Core.Models;
 using AccountManagement.Infrastructure.Database;
 using FluentValidation;
+using Newtonsoft.Json;
 
 namespace AccountManagement.Application.Account.Commands
 {
@@ -29,10 +31,12 @@ namespace AccountManagement.Application.Account.Commands
         public class Handler : IRequestHandlerWrapper<Command, UserDto>
         {
             private readonly IQuery _query;
+            private readonly IRedisProvider _redisProvider;
 
-            public Handler(IQuery query)
+            public Handler(IQuery query, IRedisProvider redisProvider)
             {
                 _query = query;
+                _redisProvider = redisProvider;
             }
 
             public async Task<ResultObject<UserDto>> Handle(Command request, CancellationToken cancellationToken)
@@ -41,12 +45,15 @@ namespace AccountManagement.Application.Account.Commands
                 var result = new ResultObject<UserDto>();
                 try
                 {
-                    if (JwtEventsHandler.getClaim(request.token) == null)
+                    //var tokenEx = _query.Query<string>("SELECT TOKEN FROM USER_TOKEN WHERE TOKEN = @token ", new {token =  request.token});
+                    int userId = _query.Query<int>("SELECT userId FROM USER_TOKEN WHERE TOKEN = @token", new { token = request.token }).FirstOrDefault();
+                    List<string> tokens = _redisProvider.GetList($"token{userId}");
+                    if (Jwt.getClaim(request.token) == null || !_redisProvider.ExistValueByKey($"token{userId}", JsonConvert.SerializeObject(request.token)))
                     {
-                        result._code = 400;
+                        result._code = 401;
                         return result;
                     }
-                    var email = JwtEventsHandler.getClaim(request.token);
+                    var email = Jwt.getClaim(request.token);
                     var rs = _query.Query<UserDto>("SELECT * FROM USERS WHERE EMAIL = @email", new { email }).FirstOrDefault();
                     string roleSql = @"SELECT R.NAME 
                                         FROM ROLES R, USER_ROLE UR, USERS U 
