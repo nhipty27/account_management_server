@@ -2,7 +2,6 @@
 using AccountManagement.Application.Account.Dtos;
 using AccountManagement.Application.Auth.Commands;
 using AccountManagement.Application.Auth.Dtos;
-using AccountManagement.Infrastructure.Core.Cookie;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,11 +44,6 @@ namespace AccountManagement.API.Controllers
             var data = await _mediator.Send(new AddNewUser.Command{
                 Data= Data,
             });
-            if (data._code == 200)
-            {
-                HttpContext context = _accessor.HttpContext;
-                CookieHelper.setCookie(context, "token", data.Data, 10);
-            }
             return Ok(data);
         }
 
@@ -59,11 +53,6 @@ namespace AccountManagement.API.Controllers
         public async Task<ActionResult> Login(Login.Command command)
         {
             var data = await _mediator.Send(command);
-            if (data._code == 200)
-            {
-                HttpContext context = _accessor.HttpContext;
-                CookieHelper.setCookie(context, "token", data.Data, 10);
-            }
             return Ok(data);
         }
 
@@ -78,7 +67,6 @@ namespace AccountManagement.API.Controllers
             {
                 token = token,
             });
-            CookieHelper.deleteCookie(context, "token");
             return Ok(data);
         }
 
@@ -95,5 +83,24 @@ namespace AccountManagement.API.Controllers
             });
             return Ok(data);
         }
+
+        [HttpPost]
+        [Route("test")]
+        [AllowAnonymous]
+        public async Task<ActionResult> Test([FromBody] DateTest Data)
+        {
+            var data = await _mediator.Send(new Test.Command
+            {
+                FromDate = Data.FromDate,
+                ToDate = Data.ToDate,
+            }); ;
+            return Ok(data);
+        }
     }
+}
+
+public class DateTest
+{
+    public DateTime? FromDate { get; set; }
+    public DateTime? ToDate { get; set; }
 }

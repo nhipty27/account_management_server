@@ -56,7 +56,7 @@ namespace AccountManagement.Application.Auth.Commands
         /// <summary>
         /// Request input
         /// </summary>
-        public class Command : IRequestWrapper<string>
+        public class Command : IRequestWrapper<UserRespone>
         {
             public string email { get; set; }
             public string password { get; set; }
@@ -78,7 +78,7 @@ namespace AccountManagement.Application.Auth.Commands
             }
         }
 
-        public class Handler : IRequestHandlerWrapper<Command, string>
+        public class Handler : IRequestHandlerWrapper<Command, UserRespone>
         {
             private readonly IQuery _query;
             private readonly IRedisProvider _redisProvider;
@@ -88,13 +88,13 @@ namespace AccountManagement.Application.Auth.Commands
                 _query = query;
                 _redisProvider = redisProvider;
             }
-            public async Task<ResultObject<string>> Handle(Command request, CancellationToken cancellationToken)
+            public async Task<ResultObject<UserRespone>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var result = new ResultObject<string>();
+                var result = new ResultObject<UserRespone>();
                 try
                 {
                     var existUser =  _query.Query<string>("SELECT PASSWORD FROM USERS WHERE email = @email", new { email = request.email }).FirstOrDefault();
-
+                    
                     if (existUser.IsNullOrEmpty())
                     {
                         result.Message = "Tài khoản không tồn tại";
@@ -116,8 +116,13 @@ namespace AccountManagement.Application.Auth.Commands
                         result.Message = res.Message;
                         if(res.ResultStatus != -1)
                         {
+                            var rs = _query.Query<UserDto>(@"SELECT U.*, R.name as role 
+                                                    FROM USERS U, USER_ROLE UR, ROLES R
+                                                    WHERE U.id = UR.userId AND UR.roleId = R.id AND U.email = @email", new { email = request.email }).FirstOrDefault();
                             _redisProvider.PushTopIfNotExist($"token{res.ResultStatus}", JsonConvert.SerializeObject(jwt));
-                            result.Data = jwt;
+                            result.Data = new UserRespone();
+                            result.Data.user = rs;
+                            result.Data.token = jwt;
                         }
                         else
                         {

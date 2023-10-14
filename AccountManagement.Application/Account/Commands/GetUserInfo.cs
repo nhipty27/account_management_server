@@ -51,16 +51,15 @@ namespace AccountManagement.Application.Account.Commands
                     if (Jwt.getClaim(request.token) == null || !_redisProvider.ExistValueByKey($"token{userId}", JsonConvert.SerializeObject(request.token)))
                     {
                         result._code = 401;
+                        result.Message = "Không thể truy cập!";
                         return result;
                     }
                     var email = Jwt.getClaim(request.token);
-                    var rs = _query.Query<UserDto>("SELECT * FROM USERS WHERE EMAIL = @email", new { email }).FirstOrDefault();
-                    string roleSql = @"SELECT R.NAME 
-                                        FROM ROLES R, USER_ROLE UR, USERS U 
-                                        WHERE U.id = UR.userId AND UR.roleId = R.id AND U.email = @email";
-                    var role = _query.Query<string>(roleSql, new { email }).FirstOrDefault();
+                    var rs = _query.Query<UserDto>(@"SELECT U.*, R.name as role 
+                                                    FROM USERS U, USER_ROLE UR, ROLES R
+                                                    WHERE U.id = UR.userId AND UR.roleId = R.id AND U.email = @email", new { email }).FirstOrDefault();
+                    
                     result.Data = rs;
-                    result.Data.role = role;
                 }
                 catch (Exception ex)
                 {

@@ -24,7 +24,7 @@ namespace AccountManagement.Application.Auth.Commands
                 DELETE FROM USER_TOKEN WHERE userId = @id AND TOKEN <> @curToken
             END
 
-            UPDATE USERS SET password = @new_password
+            UPDATE USERS SET password = @new_password WHERE id = @id
             
             SELECT @ResultStatus = 1, @Message = N'Đổi mật khẩu thành công';
 

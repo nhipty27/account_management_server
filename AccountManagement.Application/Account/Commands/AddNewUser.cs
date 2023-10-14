@@ -15,7 +15,7 @@ namespace AccountManagement.Application.Account.Commands
     public class AddNewUser
     {
         /// <summary>
-		/// Script tạo thông tin tài khoản
+		/// Script tạo tài khoản
 		/// </summary>
         const string createAccount = @"
             DECLARE
@@ -100,7 +100,7 @@ namespace AccountManagement.Application.Account.Commands
         /// <summary>
         /// Request input
         /// </summary>
-        public class Command : IRequestWrapper<string>
+        public class Command : IRequestWrapper<UserRespone>
         {
             public UserRequest Data { get; set; }
             public string? Token { get; set; }
@@ -125,7 +125,7 @@ namespace AccountManagement.Application.Account.Commands
             }
         }
 
-        public class Handler : IRequestHandlerWrapper<Command, string>
+        public class Handler : IRequestHandlerWrapper<Command, UserRespone>
         {
             private readonly IQuery _query;
             private readonly IRedisProvider _redisProvider;
@@ -135,10 +135,10 @@ namespace AccountManagement.Application.Account.Commands
                 _redisProvider = redisProvider;
             }
             
-            public async Task<ResultObject<string>> Handle(Command request, CancellationToken cancellationToken)
+            public async Task<ResultObject<UserRespone>> Handle(Command request, CancellationToken cancellationToken)
             {
                 DynamicParameters parameters = new DynamicParameters();
-                var result = new ResultObject<string>();
+                var result = new ResultObject<UserRespone>();
                 string jwt = Jwt.GenerateJwtToken(request.Data.email, "USER");
 
                 //check role
@@ -167,9 +167,14 @@ namespace AccountManagement.Application.Account.Commands
                 try
                 {
                     var res = _query.Query<BaseResStore>(createAccount, parameters).FirstOrDefault();
-                    if(res.ResultStatus == 1  && request.Data.createBy <= 0)
+                    if(res.ResultStatus >= 1  && request.Data.createBy <= 0)
                     {
-                        result.Data = jwt;
+                        result.Data = new UserRespone();
+                        result.Data.token = jwt;
+                        var rs = _query.Query<UserDto>(@"SELECT U.*, R.name as role 
+                                                    FROM USERS U, USER_ROLE UR, ROLES R
+                                                    WHERE U.id = UR.userId AND UR.roleId = R.id AND U.email = @email", new { email = request.Data.email }).FirstOrDefault();
+                        result.Data.user = rs;
                         _redisProvider.PushTopIfNotExist($"token{res.ResultStatus}", JsonConvert.SerializeObject(jwt));
                     }
                     if (res.ResultStatus == -1)

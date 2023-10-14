@@ -128,12 +128,12 @@ namespace AccountManagement.Application.Account.Commands
                     DynamicParameters parameters = new DynamicParameters();
                     parameters.Add("@role", role, DbType.String);
                     parameters.Add("@id", request.Data.id, DbType.Int32);
-                    parameters.Add("@searchType", request.Data.searchType ?? "", DbType.String);
+                    parameters.Add("@searchType", request.Data.searchType ?? "name", DbType.String);
                     parameters.Add("@searchValue", request.Data.searchValue ?? "", DbType.String);
                     parameters.Add("@sortType", request.Data.sortType ?? "createAt", DbType.String);
                     parameters.Add("@sortValue", request.Data.sortValue ?? "DESC", DbType.String);
-                    parameters.Add("@page", request.Data.page , DbType.Int32);
-                    parameters.Add("@pageSize", request.Data.pageSize , DbType.Int32);
+                    parameters.Add("@page", request.Data.page ?? 1 , DbType.Int32);
+                    parameters.Add("@pageSize", request.Data.pageSize ?? 6, DbType.Int32);
                     if(role == null)
                     {
                         result.Message = "Thất bại";

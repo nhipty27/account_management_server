@@ -11,7 +11,7 @@ namespace AccountManagement.Application.Account.Commands
     public class decenRole
     {
         ///<summary>
-        ///script delete account
+        ///script update role
         ///</summary>
         const string decenRoleScript = @"
             DECLARE
